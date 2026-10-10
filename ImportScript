@@ -328,6 +328,7 @@ function reimportOCAP() {
     // ──────────────────────────────────────────────────────────────────────
 
     // Process events
+    const MAX_FOOT_KILL_DIST = 1500; // on-foot kills beyond this don't count for distance stats
     const seenHits = new Set();
     (data.events || []).forEach(event => {
       const frame = event[0];
@@ -397,7 +398,10 @@ function reimportOCAP() {
               players[killerId].killDistInVehicle.push(distance);
             } else {
               players[killerId].killsOnFoot++;
-              players[killerId].killDistOnFoot.push(distance);
+              // Implausible on-foot kill distances (e.g. launcher/vehicle kills logged
+              // with the wrong weapon, OCAP artifacts) still count as kills but are
+              // excluded from avg/longest distance stats.
+              if (distance <= MAX_FOOT_KILL_DIST) players[killerId].killDistOnFoot.push(distance);
               const weapon = (killerInfo && killerInfo[1]) ? killerInfo[1] : "Unknown";
               players[killerId].weaponKills[weapon] = (players[killerId].weaponKills[weapon] || 0) + 1;
             }
