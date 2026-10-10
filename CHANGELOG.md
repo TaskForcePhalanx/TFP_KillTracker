@@ -6,6 +6,9 @@ All notable changes to TFP Kill Tracker are documented here.
 
 ## Unreleased
 
+### Removed
+- **"Wrong unit?" buttons** on the player modal and career page (the copy-to-clipboard unit correction helper); unit overrides stay in `unit_overrides.json`
+
 ### Added
 - **Campaign page** — click the 📊 button on a campaign pill (or right-click the pill, or open `?campaign=<name>`) to get a one-page overview of a campaign: totals (missions, players, kills, deaths, K/D, vehicles destroyed, TK, accuracy, longest kill, time, distance), highlights, per-mission table, per-player table and top weapons. Zeus rows are excluded; filters don't apply.
 
