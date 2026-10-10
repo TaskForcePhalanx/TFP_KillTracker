@@ -6,6 +6,9 @@ All notable changes to TFP Kill Tracker are documented here.
 
 ## v1.026 — 2026-06-27 (latest)
 
+### Fixed
+- **Implausible longest kill** — on-foot kills farther than 1500 m (e.g. launcher/vehicle kills logged with the wrong weapon) no longer count towards longest/avg kill distance. The ImportScript skips them on import (re-import to fix avg), and the dashboard ignores such longest-kill values in existing sheet data
+
 ### Fixed (ImportScript — OCAP v5 compatibility)
 - **Empty player names** — OCAP v5 sometimes leaves `entity.name` empty while storing the correct name in per-frame position data (`positions[i][4]`). The ImportScript now falls back to the first non-empty frame name, so players no longer appear as "Unknown &lt;id&gt;"
 - **Duplicate shot entries** — OCAP v5 logs multiple `framesFired` entries per frame for the same shot (raycast duplicates with identical target positions, typically 2–3× inflation). Shots are now deduplicated by `(frame, targetPosition)`, preserving legitimate multi-bullet bursts on the same frame while removing duplicates
