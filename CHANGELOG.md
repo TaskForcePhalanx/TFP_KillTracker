@@ -4,6 +4,13 @@ All notable changes to TFP Kill Tracker are documented here.
 
 ---
 
+## Unreleased
+
+### Added
+- **Campaign page** — click the 📊 button on a campaign pill (or right-click the pill, or open `?campaign=<name>`) to get a one-page overview of a campaign: totals (missions, players, kills, deaths, K/D, vehicles destroyed, TK, accuracy, longest kill, time, distance), highlights, per-mission table, per-player table and top weapons. Zeus rows are excluded; filters don't apply.
+
+---
+
 ## v1.026 — 2026-06-27 (latest)
 
 ### Fixed
