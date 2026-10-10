@@ -111,6 +111,17 @@
   }
   .unit-reassign-btn:hover { filter: brightness(0.9); }
 
+  /* ── CAMPAIGN VIEW ── */
+  #campaignHeader, #campaignStats { display: none; }
+  body.campaign-mode #campaignHeader { display: flex; }
+  body.campaign-mode #campaignStats { display: block; background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; }
+  body.campaign-mode #statsBar, body.campaign-mode #awardsRow, body.campaign-mode #hallFameLabel,
+  body.campaign-mode #shameRow, body.campaign-mode #hallShameLabel, body.campaign-mode .chart-section,
+  body.campaign-mode .filter-panel, body.campaign-mode #sectionNav, body.campaign-mode #filterBadge,
+  body.campaign-mode .section-header, body.campaign-mode #sc-infantry, body.campaign-mode #sc-vehicle,
+  body.campaign-mode #unitLeaderboardSection, body.campaign-mode #extraLeaderboardSections,
+  body.campaign-mode #careerHeader, body.campaign-mode #careerStats { display: none !important; }
+
   /* ── CAREER VIEW ── */
   .career-pills-label {
     font-size: 0.72rem; color: var(--charcoal); font-weight: 600;
@@ -570,6 +581,16 @@
         <div class="career-header-sub" id="careerPlayerSub"></div>
       </div>
     </div>
+
+    <!-- Campaign page (shown only in campaign mode) -->
+    <div id="campaignHeader" class="career-header">
+      <button class="btn-back" onclick="closeCampaignPage()">← Back to Leaderboard</button>
+      <div>
+        <div class="career-header-name" id="campaignName"></div>
+        <div class="career-header-sub" id="campaignSub"></div>
+      </div>
+    </div>
+    <div id="campaignStats"></div>
 
     <!-- Career inline stats (hidden in leaderboard mode) -->
     <div id="careerStats" style="display:none"></div>
