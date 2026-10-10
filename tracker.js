@@ -456,31 +456,6 @@ function unitBadgeHTML(playerName) {
   return `<span class="unit-badge" style="background:${color}">${unit}</span>`;
 }
 
-function unitReassignHTML(playerName) {
-  const current = playerUnits[playerName] || 'Unknown';
-  const units = [...UNIT_ORDER, null];
-  const btns = units.map(u => {
-    const label = u || 'Unknown';
-    const color = u ? UNIT_COLORS[u] : '#888';
-    const active = current === (u || 'Unknown');
-    const bg = active ? color : 'white';
-    const fg = active ? 'white' : '#333';
-    const border = active ? `2px solid ${color}` : '1px solid #ddd';
-    return `<button class="unit-reassign-btn" style="background:${bg};color:${fg};border:${border}"
-      onclick="copyUnitCorrection('${playerName.replace(/'/g,"\\'")}', ${u ? `'${u}'` : 'null'})">${label}</button>`;
-  }).join('');
-
-  return `<div class="unit-reassign-row">
-    <span class="unit-reassign-label">Wrong unit?</span>
-    <div class="unit-reassign-btns">${btns}</div>
-  </div>`;
-}
-
-window.copyUnitCorrection = function(playerName, unit) {
-  const label = unit || 'Unknown';
-  navigator.clipboard.writeText(`Move ${playerName} to ${label}`);
-};
-
 function renderUnitFilter() {
   const container = document.getElementById('unitFilterBtns');
   if (!container) return;
@@ -604,7 +579,7 @@ function _openCareerPageNoHistory(playerName) {
   if (!p) return;
   document.getElementById('careerPlayerName').innerHTML = p.name + unitBadgeHTML(p.name);
   _setCareerSubtitle(p);
-  document.getElementById('careerStats').innerHTML = `<div id="unitReassignCareer">${unitReassignHTML(p.name)}</div>` + buildCareerStatsHTML(p);
+  document.getElementById('careerStats').innerHTML = buildCareerStatsHTML(p);
   renderMedalRibbons('medalContainer', new Set(((aggPlayers[p.name] || p).missionRows || []).map(r => r["Mission"] || "").filter(Boolean)));
   document.getElementById('statsBar').style.display                   = 'none';
   document.getElementById('awardsRow').style.display                  = 'none';
@@ -1624,7 +1599,7 @@ function openPlayerModal(playerName) {
   };
 
   const body = document.getElementById('modalBody');
-  body.innerHTML = unitReassignHTML(p.name) + buildCareerStatsHTML(p);
+  body.innerHTML = buildCareerStatsHTML(p);
   renderMedalRibbons('medalContainer', new Set(((aggPlayers[p.name] || p).missionRows || []).map(r => r["Mission"] || "").filter(Boolean)));
   document.getElementById('playerModal').classList.add('open');
 }
@@ -1649,7 +1624,7 @@ function openCareerPage(playerName) {
 
   document.getElementById('careerPlayerName').innerHTML = p.name + unitBadgeHTML(p.name);
   _setCareerSubtitle(p);
-  document.getElementById('careerStats').innerHTML = `<div id="unitReassignCareer">${unitReassignHTML(p.name)}</div>` + buildCareerStatsHTML(p);
+  document.getElementById('careerStats').innerHTML = buildCareerStatsHTML(p);
   renderMedalRibbons('medalContainer', new Set(((aggPlayers[p.name] || p).missionRows || []).map(r => r["Mission"] || "").filter(Boolean)));
 
   document.getElementById('statsBar').style.display                   = 'none';
