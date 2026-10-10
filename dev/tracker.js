@@ -22,6 +22,10 @@ const UNIT_ORDER  = ['2nd USC', 'CNTO', 'PXG', 'TFP', 'SKUA'];
 // Shots InVeh(21), Hits InVeh(22), SPK InVeh(23), AvgDist InVeh(24), LongestInVeh(25)
 
 const NUM = v => parseFloat(v) || 0;
+// On-foot kills beyond this distance are treated as data errors (e.g. wrong weapon
+// attribution) and ignored for "longest kill" stats. Mirrors ImportScript.
+const MAX_FOOT_KILL_DIST = 1500;
+const footLongest = v => (v > MAX_FOOT_KILL_DIST ? 0 : v);
 
 function fmtTime(secs) {
   if (!secs) return "—";
@@ -296,7 +300,7 @@ function buildAggregates() {
     const sof  = NUM(r["Shots (On Foot)"]);
     const hof  = NUM(r["Hits Taken (On Foot)"]);
     const hdof = NUM(r["Hits Dealt (On Foot)"]);
-    const lof  = NUM(r["Longest Kill On Foot (m)"]);
+    const lof  = footLongest(NUM(r["Longest Kill On Foot (m)"]));
     const aof  = NUM(r["Avg Kill Dist On Foot (m)"]);
 
     const kiv  = NUM(r["Kills (In Vehicle)"]);
@@ -845,7 +849,7 @@ function applyFilters() {
     const sof  = NUM(r["Shots (On Foot)"]);
     const hof  = NUM(r["Hits Taken (On Foot)"]);
     const hdof = NUM(r["Hits Dealt (On Foot)"]);
-    const lof  = NUM(r["Longest Kill On Foot (m)"]);
+    const lof  = footLongest(NUM(r["Longest Kill On Foot (m)"]));
     const aof  = NUM(r["Avg Kill Dist On Foot (m)"]);
     const kiv  = NUM(r["Kills (In Vehicle)"]);
     const div2 = NUM(r["Deaths (In Vehicle)"]);
@@ -1476,7 +1480,7 @@ function buildCareerStatsHTML(p) {
     const btk  = NUM(best["Teamkills (On Foot)"]);
     const bsh  = NUM(best["Shots (On Foot)"]);
     const bspk = bk > 0 ? (bsh / bk).toFixed(1) : null;
-    const blk  = NUM(best["Longest Kill On Foot (m)"]);
+    const blk  = footLongest(NUM(best["Longest Kill On Foot (m)"]));
     const bad  = NUM(best["Avg Kill Dist On Foot (m)"]);
     const bkiv  = NUM(best["Kills (In Vehicle)"]);
     const bdiv  = NUM(best["Deaths (In Vehicle)"]);
@@ -1543,7 +1547,7 @@ function buildCareerStatsHTML(p) {
     m.sh  += NUM(r["Shots (On Foot)"]);
     m.ht  += NUM(r["Hits Taken (On Foot)"]);
     m.hd  += NUM(r["Hits Dealt (On Foot)"]);
-    m.lk   = Math.max(m.lk, NUM(r["Longest Kill On Foot (m)"]));
+    m.lk   = Math.max(m.lk, footLongest(NUM(r["Longest Kill On Foot (m)"])));
     if (kof > 0 && aof > 0) { m._adSum += aof * kof; m._adN += kof; }
     m.dr  += NUM(r["Distance Run (km)"] || r["Distance Run (km)\r"] || "0");
     m.tp  += NUM(r["Time Played (s)"] || r["Time Played (s)\r"] || "0");

@@ -72,9 +72,41 @@
     [
       "Operation Tramontane phase 1 (2026-04-25)"
     ],
-    "patterns": ["Operation Tramontane"]
+    "patterns": ["Operation_Tramontane"]
   },
-  
+
+    "Operation Camilla": 
+  {
+    "missions": 
+    [
+      "East Africa - Mini Joint OP (2026-06-27)"
+    ],
+    "patterns": ["East Africa"]
+  },
+    "The Mountain War": 
+  {
+    "missions": 
+    [
+      "The_Mountain_War (2026-07-04)"
+    ],
+    "patterns": ["The_Mountain_War"]
+  },
+      "Operation Baltic Guardian": 
+  {
+    "missions": 
+    [
+      "Baltic Showdown (Part 1) (2026-09-05)"
+    ],
+    "patterns": ["Baltic Showdown"]
+  },
+    "Operation Grenzfest": 
+  {
+    "missions": 
+    [
+      "Operation Grenzfest 1 (2026-09-26)"
+    ],
+    "patterns": ["Operation Grenzfest"]
+  },
 "Winter War": 
   {
     "missions": 
