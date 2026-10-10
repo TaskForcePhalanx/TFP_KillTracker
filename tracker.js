@@ -560,13 +560,20 @@ function buildUI() {
 
   // ── Deep-link: ?player=Name ──────────────────────────────────────────────
   const _dlPlayer = new URLSearchParams(window.location.search).get('player');
+  const _dlCampaign = new URLSearchParams(window.location.search).get('campaign');
   if (_dlPlayer) openCareerPage(_dlPlayer);
+  else if (_dlCampaign && campaignData[_dlCampaign]) openCampaignPage(_dlCampaign);
 
   window.addEventListener('popstate', e => {
     const name = e.state && e.state.player;
-    if (name) {
+    const camp = e.state && e.state.campaign;
+    if (camp && campaignData[camp]) {
+      _showCampaignPage(camp);
+    } else if (name) {
+      _hideCampaignPage();
       _openCareerPageNoHistory(name);
     } else {
+      _hideCampaignPage();
       _closeCareerPageNoHistory();
     }
   });
@@ -738,6 +745,13 @@ function refreshPills() {
       const pill = document.createElement("span");
       pill.className = "pill" + (isActive ? " active" : "");
       pill.textContent = campaignName;
+      const campBtn = document.createElement("button");
+      campBtn.className = "career-icon-btn";
+      campBtn.title = "Open campaign page";
+      campBtn.textContent = "📊";
+      campBtn.onclick = ev => { ev.stopPropagation(); openCampaignPage(campaignName); };
+      pill.appendChild(campBtn);
+      pill.oncontextmenu = ev => { ev.preventDefault(); openCampaignPage(campaignName); };
       pill.onclick = () => {
         if (selectedCampaign === campaignName) {
           selectedCampaign = null;
@@ -1621,7 +1635,9 @@ function mStat(val, lbl, sub) {
 
 // ── CAREER PAGE ──────────────────────────────────────────────────────────
 function openCareerPage(playerName) {
+  _hideCampaignPage();
   const url = new URL(window.location.href);
+  url.searchParams.delete('campaign');
   url.searchParams.set('player', playerName);
   history.pushState({ player: playerName }, '', url);
 
@@ -1671,6 +1687,144 @@ function closeCareerPage() {
 
   applyFilters(); // renderLeader handles awardsRow visibility
   refreshPills();
+  window.scrollTo(0, 0);
+}
+
+// ── CAMPAIGN PAGE ────────────────────────────────────────────────────────
+// All missions of a campaign (explicit list + pattern matches), independent of UI filters.
+function _campaignMissionNames(campaignName) {
+  const camp = campaignData[campaignName];
+  if (!camp) return [];
+  const present = new Set(rawRows.map(r => r["Mission"] || "").filter(Boolean));
+  const out = new Set((camp.missions || []).filter(m => present.has(m)));
+  (camp.patterns || []).forEach(pat => present.forEach(m => { if (m.includes(pat)) out.add(m); }));
+  return [...out];
+}
+
+function _missionSortKey(m) {
+  return (m.match(/\((\d{4}-\d{2}-\d{2})\)/) || [])[1] || '';
+}
+
+function buildCampaignHTML(campaignName) {
+  const missionNames = _campaignMissionNames(campaignName).sort((a, b) => _missionSortKey(a).localeCompare(_missionSortKey(b)) || a.localeCompare(b));
+  const missionSet = new Set(missionNames);
+  const rows = rawRows.filter(r => missionSet.has(r["Mission"] || "") && !rowIsZeus(r));
+  if (!rows.length) return '<p style="color:#888">No data for this campaign yet.</p>';
+
+  const T = { kills: 0, deaths: 0, killsVeh: 0, deathsVeh: 0, vk: 0, tk: 0, shots: 0, hitsDealt: 0, longest: 0, time: 0, dist: 0 };
+  const players = {}, missions = {}, weapons = {};
+  missionNames.forEach(m => { missions[m] = { name: m, players: new Set(), k: 0, d: 0, vk: 0, tk: 0, lk: 0 }; });
+
+  rows.forEach(r => {
+    const name = nameMap[r["Username"] || ""] || r["Username"] || "";
+    if (!name) return;
+    const mission = r["Mission"] || "";
+    const kof = NUM(r["Kills (On Foot)"]), dof = NUM(r["Deaths (On Foot)"]), tk = NUM(r["Teamkills (On Foot)"]) + NUM(r["Teamkills (In Vehicle)"]);
+    const kiv = NUM(r["Kills (In Vehicle)"]), div2 = NUM(r["Deaths (In Vehicle)"]);
+    const vk = NUM(r["Vehicle Kills (On Foot)"]) + NUM(r["Vehicle Kills (In Vehicle)"]);
+    const sh = NUM(r["Shots (On Foot)"]), hd = NUM(r["Hits Dealt (On Foot)"]);
+    const lk = footLongest(NUM(r["Longest Kill On Foot (m)"]));
+
+    T.kills += kof; T.deaths += dof; T.killsVeh += kiv; T.deathsVeh += div2; T.vk += vk; T.tk += tk;
+    T.shots += sh; T.hitsDealt += hd; T.longest = Math.max(T.longest, lk);
+    T.time += NUM(r["Time Played (s)"]); T.dist += NUM(r["Distance Run (km)"]);
+
+    const m = missions[mission];
+    m.players.add(name); m.k += kof; m.d += dof; m.vk += vk; m.tk += tk; m.lk = Math.max(m.lk, lk);
+
+    const p = players[name] || (players[name] = { name, missions: new Set(), k: 0, d: 0, vk: 0, tk: 0, sh: 0, lk: 0 });
+    p.missions.add(mission); p.k += kof; p.d += dof; p.vk += vk; p.tk += tk; p.sh += sh; p.lk = Math.max(p.lk, lk);
+
+    try {
+      Object.entries(JSON.parse(r["Weapon Kills (JSON)"] || "{}")).forEach(([w, c]) => {
+        const weapon = w.replace(/\s*\[[^\]]+\]$/, '');
+        weapons[weapon] = (weapons[weapon] || 0) + c;
+      });
+    } catch (e) {}
+  });
+
+  const plist = Object.values(players).sort((a, b) => b.k - a.k || a.d - b.d);
+  const fmtKD = (k, d) => (d > 0 ? k / d : k).toFixed(2);
+  const acc = T.shots > 0 ? (T.hitsDealt / T.shots * 100).toFixed(1) + '%' : '—';
+  const esc = n => n.replace(/'/g, "\\'");
+
+  const overall = `<div class="modal-section"><h3>Campaign Overview</h3><div class="modal-grid">
+    ${mStat(missionNames.length, 'Missions')}
+    ${mStat(plist.length, 'Players')}
+    ${mStat(T.kills, 'Infantry Kills')}
+    ${mStat(T.deaths, 'Deaths (On Foot)')}
+    ${mStat(fmtKD(T.kills, T.deaths), 'K/D')}
+    ${mStat(T.killsVeh, 'Kills in Vehicle')}
+    ${mStat(T.vk, 'Vehicles Destroyed')}
+    ${mStat(T.tk, 'Teamkills')}
+    ${mStat(T.shots.toLocaleString(), 'Shots Fired')}
+    ${mStat(acc, 'Accuracy')}
+    ${mStat(T.longest ? T.longest + ' m' : '—', 'Longest Kill')}
+    ${mStat(T.time ? fmtTime(T.time) : '—', 'Time Played')}
+    ${mStat(T.dist ? T.dist.toFixed(1) + ' km' : '—', 'Distance Run')}
+  </div></div>`;
+
+  const top = (arr, key) => arr.slice().sort((a, b) => b[key] - a[key])[0];
+  const topK = top(plist, 'k'), topVK = top(plist, 'vk'), topLK = top(plist, 'lk');
+  const best = plist.filter(p => p.d + p.k >= 10).sort((a, b) => (b.d ? b.k / b.d : b.k) - (a.d ? a.k / a.d : a.k))[0];
+  const spotlight = `<div class="modal-section"><h3>Highlights</h3><div class="modal-grid">
+    ${topK && topK.k ? mStat(topK.name, 'Most Kills', topK.k + ' kills') : ''}
+    ${best ? mStat(best.name, 'Best K/D (min 10 K+D)', fmtKD(best.k, best.d)) : ''}
+    ${topLK && topLK.lk ? mStat(topLK.name, 'Longest Kill', topLK.lk + ' m') : ''}
+    ${topVK && topVK.vk ? mStat(topVK.name, 'Most Vehicles Destroyed', topVK.vk + '') : ''}
+  </div></div>`;
+
+  const missionRows = missionNames.map(n => {
+    const m = missions[n];
+    return `<tr><td>${n.replace(/\s*\(\d{4}-\d{2}-\d{2}\)$/, '')}</td><td>${missionDate(n)}</td><td>${m.players.size}</td><td>${m.k}</td><td>${m.d}</td><td>${fmtKD(m.k, m.d)}</td><td>${m.vk}</td><td>${m.tk}</td><td>${m.lk || '—'}</td></tr>`;
+  }).join('');
+  const missionHTML = `<div class="modal-section"><h3>Missions</h3><div style="overflow-x:auto"><table class="mission-table" style="min-width:700px">
+    <thead><tr><th>Mission</th><th>Date</th><th>Players</th><th>Kills</th><th>Deaths</th><th>K/D</th><th>Veh Kills</th><th>TK</th><th>Longest (m)</th></tr></thead>
+    <tbody>${missionRows}</tbody></table></div></div>`;
+
+  const playerRows = plist.map((p, i) => `<tr><td>${i + 1}</td><td><span>${p.name}</span>${unitBadgeHTML(p.name)}<button class="career-icon-btn" onclick="openCareerPage('${esc(p.name)}')">📊</button></td><td>${p.missions.size}</td><td>${p.k}</td><td>${p.d}</td><td>${fmtKD(p.k, p.d)}</td><td>${p.vk}</td><td>${p.tk}</td><td>${p.k > 0 ? (p.sh / p.k).toFixed(1) : '—'}</td><td>${p.lk || '—'}</td></tr>`).join('');
+  const playerHTML = `<div class="modal-section"><h3>Players</h3><div style="overflow-x:auto"><table class="mission-table" style="min-width:700px">
+    <thead><tr><th>#</th><th>Player</th><th>Missions</th><th>Kills</th><th>Deaths</th><th>K/D</th><th>Veh Kills</th><th>TK</th><th>Shots/Kill</th><th>Longest (m)</th></tr></thead>
+    <tbody>${playerRows}</tbody></table></div></div>`;
+
+  const wlist = Object.entries(weapons).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const wmax = wlist.length ? wlist[0][1] : 1;
+  const weaponHTML = wlist.length ? `<div class="modal-section"><h3>Top Weapons</h3>${wlist.map(([w, c]) =>
+    `<div class="weapon-bar-row"><div class="weapon-label" title="${w}">${w}</div><div class="weapon-track"><div class="weapon-fill" style="width:${(c / wmax * 100).toFixed(1)}%"></div></div><div class="weapon-val">${c}</div></div>`).join('')}</div>` : '';
+
+  return overall + spotlight + missionHTML + playerHTML + weaponHTML;
+}
+
+function _showCampaignPage(campaignName) {
+  const names = _campaignMissionNames(campaignName);
+  const dates = names.map(_missionSortKey).filter(Boolean).sort();
+  const range = dates.length > 1 ? `${missionDate(`(${dates[0]})`)} – ${missionDate(`(${dates[dates.length - 1]})`)}` : (dates[0] ? missionDate(`(${dates[0]})`) : '');
+  document.getElementById('campaignName').textContent = campaignName;
+  document.getElementById('campaignSub').textContent = `${names.length} mission${names.length === 1 ? '' : 's'}` + (range ? `   ·   ${range}` : '');
+  document.getElementById('campaignStats').innerHTML = buildCampaignHTML(campaignName);
+  document.getElementById('careerHeader').style.display = 'none';
+  document.getElementById('careerStats').style.display  = 'none';
+  document.body.classList.add('campaign-mode');
+  window.scrollTo(0, 0);
+}
+
+function _hideCampaignPage() {
+  document.body.classList.remove('campaign-mode');
+}
+
+function openCampaignPage(campaignName) {
+  const url = new URL(window.location.href);
+  url.searchParams.delete('player');
+  url.searchParams.set('campaign', campaignName);
+  history.pushState({ campaign: campaignName }, '', url);
+  _showCampaignPage(campaignName);
+}
+
+function closeCampaignPage() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete('campaign');
+  history.pushState({}, '', url);
+  _hideCampaignPage();
   window.scrollTo(0, 0);
 }
 

@@ -21,6 +21,7 @@ A static web dashboard that pulls live kill statistics from a Google Sheets CSV 
 - **Attendance Tracker** — per-player mission count, attendance %, first seen, last seen, and avg time per mission
 - **K/D Trend chart** — SVG line chart of K/D ratio over time; switchable between overall, per unit, or individual player; yellow dashed K/D=1.0 reference line; dot values shown on hover
 - **Top Killers chart** — horizontal bar chart of the leading infantry killers
+- **Campaign page** — 📊 button on each campaign pill opens a one-page campaign summary (totals, highlights, missions, players, top weapons); deep link via `?campaign=<name>`
 - **Award cards** — Hall of Fame and Hall of Shame cards for best/worst K/D, shots-per-kill, longest kill, teamkills, hits taken, most/least distance run, and more; hover any stat line to see the per-mission average
 
 ### Player Tools
