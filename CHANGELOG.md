@@ -7,7 +7,7 @@ All notable changes to TFP Kill Tracker are documented here.
 ## Unreleased
 
 ### Fixed
-- **Longest kill from destroyed vehicles** — crew members killed in the same frame as a vehicle kill by the same player (e.g. a helicopter shot down with a Stinger) still count as kills but no longer feed longest/avg kill distance. Re-import missions to apply
+- **Longest kill from destroyed vehicles** — crew members of a destroyed vehicle (victim sitting in a vehicle when killed, or killed in the same frame as a vehicle kill by the same player, e.g. a helicopter shot down with a Stinger) still count as kills but no longer feed longest/avg kill distance. Re-import missions to apply
 
 ### Removed
 - **"Wrong unit?" buttons** on the player modal and career page (the copy-to-clipboard unit correction helper); unit overrides stay in `unit_overrides.json`

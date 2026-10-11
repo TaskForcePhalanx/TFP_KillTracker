@@ -405,7 +405,10 @@ function reimportOCAP() {
               }
             }
           } else {
-            const isCrewKill = vehicleKillFrames.has(`${killerId}:${frame}`);
+            // Crew of a shot-down vehicle: victim sat in a vehicle (this or previous frame), or
+            // died in the same frame as a vehicle kill by the same player.
+            const isCrewKill = vehicleKillFrames.has(`${killerId}:${frame}`) ||
+              isInVehicleAtFrame(victim, frame) || isInVehicleAtFrame(victim, frame - 1);
             if (killerInVehicle) {
               players[killerId].killsInVehicle++;
               if (!isCrewKill) players[killerId].killDistInVehicle.push(distance);
