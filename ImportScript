@@ -330,6 +330,18 @@ function reimportOCAP() {
     // Process events
     const MAX_FOOT_KILL_DIST = 1500; // on-foot kills beyond this don't count for distance stats
     const seenHits = new Set();
+    // Frames in which a player destroyed an enemy vehicle. Crew members killed in that
+    // same frame are logged as infantry kills with the vehicle's distance, so they
+    // still count as kills but are excluded from avg/longest distance stats.
+    const vehicleKillFrames = new Set();
+    (data.events || []).forEach(event => {
+      if (event[1] !== "killed") return;
+      const v = entities[event[2]];
+      const k = event[3] ? event[3][0] : null;
+      if (v && v.type === "vehicle" && k != null && k !== event[2] && entities[k] && v.side !== entities[k].side) {
+        vehicleKillFrames.add(`${k}:${event[0]}`);
+      }
+    });
     (data.events || []).forEach(event => {
       const frame = event[0];
       const type = event[1];
@@ -393,15 +405,16 @@ function reimportOCAP() {
               }
             }
           } else {
+            const isCrewKill = vehicleKillFrames.has(`${killerId}:${frame}`);
             if (killerInVehicle) {
               players[killerId].killsInVehicle++;
-              players[killerId].killDistInVehicle.push(distance);
+              if (!isCrewKill) players[killerId].killDistInVehicle.push(distance);
             } else {
               players[killerId].killsOnFoot++;
               // Implausible on-foot kill distances (e.g. launcher/vehicle kills logged
               // with the wrong weapon, OCAP artifacts) still count as kills but are
               // excluded from avg/longest distance stats.
-              if (distance <= MAX_FOOT_KILL_DIST) players[killerId].killDistOnFoot.push(distance);
+              if (!isCrewKill && distance <= MAX_FOOT_KILL_DIST) players[killerId].killDistOnFoot.push(distance);
               const weapon = (killerInfo && killerInfo[1]) ? killerInfo[1] : "Unknown";
               players[killerId].weaponKills[weapon] = (players[killerId].weaponKills[weapon] || 0) + 1;
             }
