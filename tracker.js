@@ -1,4 +1,20 @@
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTPdSKTP3NyYXXMON52HCpNv8bEmM9ElmCgKHeGbYIVAtMv9ADAwBaniA8dqIyEHyOe3q6gbA1PEdZb/pub?gid=267117435&single=true&output=csv";
+// Where the numbers come from. The Google Sheet is the default; `?source=bot` reads
+// the same rows from the bot's database (counted straight from the OCAP server) so
+// the two can be compared side by side. Both are the same 35 columns.
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTPdSKTP3NyYXXMON52HCpNv8bEmM9ElmCgKHeGbYIVAtMv9ADAwBaniA8dqIyEHyOe3q6gbA1PEdZb/pub?gid=267117435&single=true&output=csv";
+const BOT_CSV_URL = "https://bot.taskforcephalanx.com/kt/api/stats.csv";
+const DATA_SOURCE = new URLSearchParams(location.search).get("source") === "bot" ? "bot" : "sheet";
+const CSV_URL = DATA_SOURCE === "bot" ? BOT_CSV_URL : SHEET_CSV_URL;
+if (DATA_SOURCE === "bot") {
+  document.title = "[BOT DATA] " + document.title;
+  document.addEventListener("DOMContentLoaded", () => {
+    const badge = document.createElement("div");
+    badge.textContent = "Data source: bot (?source=bot) — not the sheet";
+    badge.style.cssText = "position:fixed;bottom:8px;left:8px;z-index:9999;padding:4px 10px;" +
+      "background:#b45309;color:#fff;font:12px/1.4 sans-serif;border-radius:4px;opacity:.9;";
+    document.body.appendChild(badge);
+  });
+}
 const RELEASE_DATE = "2026-06-27";
 const VERSION      = "1.026";
 

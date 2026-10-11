@@ -6,6 +6,9 @@ All notable changes to TFP Kill Tracker are documented here.
 
 ## Unreleased
 
+### Added
+- **`?source=bot`** — loads the same 35-column rows from the bot (`/kt/api/stats.csv`, counted straight from the OCAP server) instead of the Google Sheet, with a badge so the two can't be confused. For comparing the numbers side by side before the sheet is switched off
+
 ### Fixed
 - **Longest kill from destroyed vehicles** — crew members of a destroyed vehicle (victim sitting in a vehicle when killed, or killed in the same frame as a vehicle kill by the same player, e.g. a helicopter shot down with a Stinger) still count as kills but no longer feed longest/avg kill distance. Re-import missions to apply
 
